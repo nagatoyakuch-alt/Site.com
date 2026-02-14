@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Instagram</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #fafafa;
+  }
+  header {
+    background-color: #e91e63;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 20px;
+  }
+  .container {
+    max-width: 500px;
+    margin: auto;
+    padding: 10px;
+  }
+  button {
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  button:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  .btn-camera { background-color: #4caf50; }
+  .btn-upload { background-color: #2196f3; }
+  .btn-search { background-color: #ff9800; }
+
+  input[type="text"] {
+    width: 70%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+
+  .post {
+    background: white;
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  img, video {
+    max-width: 100%;
+    border-radius: 10px;
+    margin-top: 10px;
+  }
+
+  #cameraVideo {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+
+<header>Mini Instagram</header>
+
+<div class="container">
+
+  <!-- Barra de pesquisa -->
+  <div>
+    <input type="text" id="searchInput" placeholder="Pesquisar...">
+    <button class="btn-search" onclick="search()">🔍</button>
+    <p id="searchResult"></p>
+  </div>
+
+  <!-- Botões de câmera -->
+  <div>
+    <button class="btn-camera" onclick="openCamera()">📷 Tirar Foto</button>
+    <button class="btn-upload" onclick="postFile()">⬆️ Postar Arquivo</button>
+    <input type="file" id="fileInput" accept="image/*,video/*" style="display:none;">
+  </div>
+
+  <video id="cameraVideo" autoplay></video>
+
+  <!-- Feed de posts -->
+  <div id="feed"></div>
+</div>
+
+<script>
+  const feed = document.getElementById('feed');
+  let fakeFeedCount = 0;
+
+  // Pesquisa simulada
+  function search() {
+    const query = document.getElementById('searchInput').value;
+    const result = document.getElementById('searchResult');
+    result.textContent = query.trim() ? `Você pesquisou: "${query}" (simulação)` : 'Digite algo para pesquisar!';
+  }
+
+  // Abrir câmera para tirar foto
+  function openCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        const video = document.getElementById('cameraVideo');
+        video.style.display = "block";
+        video.srcObject = stream;
+        video.addEventListener('click', () => takePhoto(video, stream));
+      })
+      .catch(err => alert("Erro ao acessar a câmera: " + err));
+  }
+
+  // Tirar foto da câmera e postar
+  function takePhoto(video, stream) {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imgData = canvas.toDataURL('image/png');
+    addPost(imgData, 'image');
+
+    // Para a câmera
+    stream.getTracks().forEach(track => track.stop());
+    video.style.display = "none";
+  }
+
+  // Postar arquivo selecionado
+  function postFile() {
+    const input = document.getElementById('fileInput');
+    input.click(); // Abre seleção de arquivos
+
+    input.onchange = () => {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const type = file.type.startsWith('image/') ? 'image' : 'video';
+        addPost(e.target.result, type);
+      }
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+  }
+
+  // Adicionar post no feed
+  function addPost(src, type) {
+    const div = document.createElement('div');
+    div.className = 'post';
+    if (type === 'image') {
+      const img = document.createElement('img');
+      img.src = src;
+      div.appendChild(img);
+    } else {
+      const video = document.createElement('video');
+      video.src = src;
+      video.controls = true;
+      div.appendChild(video);
+    }
+    feed.prepend(div);
+  }
+
+  // Scroll infinito simulado
+  window.addEventListener('scroll', () => {
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
+      loadMorePosts();
+    }
+  });
+
+  function loadMorePosts() {
+    // Simula posts antigos
+    if (fakeFeedCount >= 20) return; // Limite
+    for (let i=0; i<3; i++) {
+      const div = document.createElement('div');
+      div.className = 'post';
+      div.textContent = `Post simulado #${++fakeFeedCount}`;
+      feed.appendChild(div);
+    }
+  }
+</script>
+
+</body>
+</html>
